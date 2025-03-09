@@ -32,7 +32,7 @@ export async function scrapeMovies(movies: Movie[]) {
 
     await Promise.all([
       page.click('a'),
-      page.waitForNavigation({ timeout: 20000 }),
+      page.waitForNavigation({ timeout: 50000 }),
     ]);
 
     // For rotten tomatoes pages we need to extract the scorecard

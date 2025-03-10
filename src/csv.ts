@@ -2,13 +2,15 @@ import { Movie, MovieWithScores } from './parse';
 import * as fs from 'fs';
 import csv from 'csv-parser';
 
-// Function to read the CSV and return an array of Movie objects
 export const readMoviesFromCSV = (filePath: string): Promise<Movie[]> => {
   return new Promise((resolve, reject) => {
     const movies: Movie[] = [];
 
     fs.createReadStream(filePath)
-      .pipe(csv())
+      .pipe(csv({
+        quote: '"', // Ensure that the library respects quotes around fields with commas
+        escape: '"', // Handle escaped quotes correctly within the fields
+      }))
       .on('data', (row) => {
         // Map each row to the Movie interface
         const movie: Movie = {
@@ -25,6 +27,7 @@ export const readMoviesFromCSV = (filePath: string): Promise<Movie[]> => {
       });
   });
 };
+
 
 // Function to export movie scores to a CSV
 export const exportMovieScoresToCSV = (
@@ -78,7 +81,13 @@ export const exportSingleMovieScoreToCSV = (
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const header = 'movie_title,title_year,audience_score,critics_score\n';
-    const movieData = `${movie.movieTitle},${movie.titleYear},${movie.audienceScore ?? ''},${movie.criticsScore ?? ''}\n`;
+
+    // Enclose movieTitle in quotes to handle commas correctly
+    const movieTitle = movie.movieTitle.includes(',') || movie.movieTitle.includes('"')
+      ? `"${movie.movieTitle.replace(/"/g, '""')}"` // Escape internal quotes with double quotes
+      : movie.movieTitle;
+
+    const movieData = `${movieTitle},${movie.titleYear},${movie.audienceScore ?? ''},${movie.criticsScore ?? ''}\n`;
 
     // Check if file exists to determine if we need to add the header
     const fileExists = fs.existsSync(outputFilePath);
